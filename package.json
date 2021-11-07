@@ -5,12 +5,13 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "NODE_ENV=development node -r dotenv/config index.js"
+    "dev": "cross-env NODE_ENV=development node -r dotenv/config index.js"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "bcrypt": "^5.0.1",
+    "cross-env": "^7.0.3",
     "fastify": "^3.22.1",
     "fastify-blipp": "^3.1.0",
     "fastify-cors": "^6.0.2",

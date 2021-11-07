@@ -59,7 +59,8 @@ module.exports = async (fastify, options) => {
         .prop('longitude', S.string())
         .prop('latitude', S.string())
         .prop('price', S.string())
-        .prop('waktu', S.number()),
+        .prop('waktu', S.number())
+        .prop('avatar', S.string()),
       security: [
         {
           apiKey: ['admin']
