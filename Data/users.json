@@ -1,0 +1,28 @@
+[{
+  "_id": {
+    "$oid": "618414f1dba15a4db3a4b2b6"
+  },
+  "nama": "Admin Zero",
+  "username": "adminzero",
+  "password": "$2b$04$EX2s/m2YLstGGLir0pRqhO.ceDmCPuDiLu9EBuR9kszRjMJ8EGerm",
+  "role": "admin",
+  "__v": 0
+},{
+  "_id": {
+    "$oid": "619ba7ad62c19a07dcf451e3"
+  },
+  "nama": "user01",
+  "username": "user01",
+  "password": "$2b$04$PYXceV/0ZD4KJPTo7SRwtuhvJotNC4lZwvVoI6GFfRkZtFDFxZi7i",
+  "role": "user",
+  "__v": 0
+},{
+  "_id": {
+    "$oid": "61aa126bcf9a382a1f5c4e1e"
+  },
+  "nama": "testuser",
+  "username": "testuser",
+  "password": "$2b$04$TFU0SJb/AzX4464MA5WgBenOJ7B0xcN2QBhOQYZKrhFsaXXz/9r8m",
+  "role": "user",
+  "__v": 0
+}]
