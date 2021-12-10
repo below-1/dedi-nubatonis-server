@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken')
 const { User } = require('../model/user')
 const S = require('fluent-json-schema')
 const createError = require('fastify-error')
+const checkUser = require('../plug/auth')
 
 const UserNotFound = createError('FST_USER_NOT_FOUND', "User with username=%s can't be found", 500)
 const PasswordNotMatch = createError('FST_PASSWORD_NOT_MATCH', "Password not match", 500)
@@ -40,6 +41,7 @@ module.exports = async (fastify, options) => {
       body: S.object()
         .prop('username', S.string())
         .prop('password', S.string())
+        .prop('role', S.string())
         .prop('nama', S.string()),
       description: 'Signup as admin'
     },
@@ -47,14 +49,15 @@ module.exports = async (fastify, options) => {
       const { 
         username, 
         password,
-        nama
+        nama,
+        role
       } = request.body
       const hashedPassword = await bcrypt.hash(password, 2)
       const user = new User({
         username,
         password: hashedPassword,
         nama,
-        role: 'admin'
+        role
       })
       try {
         await user.validate()
@@ -75,10 +78,13 @@ module.exports = async (fastify, options) => {
       tags: ['auth'],
       security: [
         { apiKey: ['admin', 'user', 'photographer'] }
-      ]
+      ],
     },
+    preHandler: [checkUser],
     handler: async (request, reply) => {
-      
+      const user = request.user
+      console.log(user)
+      reply.send(user)
     }
   })
 }

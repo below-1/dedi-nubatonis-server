@@ -15,6 +15,8 @@ module.exports = async (fastify, options) => {
       tags: ['location'],
       body: S.object()
         .prop('nama', S.string())
+        .prop('distance', S.number())
+        .prop('transportation', S.string())
         .prop('longitude', S.string())
         .prop('latitude', S.string())
         .prop('price', S.string())
@@ -56,6 +58,8 @@ module.exports = async (fastify, options) => {
         .prop('id', S.string()),
       body: S.object()
         .prop('nama', S.string())
+        .prop('distance', S.number())
+        .prop('transportation', S.string())
         .prop('longitude', S.string())
         .prop('latitude', S.string())
         .prop('price', S.string())

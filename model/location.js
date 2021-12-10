@@ -6,6 +6,11 @@ const schema = mongoose.Schema({
   latitude: String,
   longitude: String,
   avatar: String,
+  distance: Number,
+  transportation: {
+    type: String,
+    enum: ['bike', 'car', 'rental-car']
+  },
   photos: {
     type: {
       description: String,
