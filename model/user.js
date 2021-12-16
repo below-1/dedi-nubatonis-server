@@ -5,6 +5,10 @@ const schema = mongoose.Schema({
   nama: String,
   username: String,
   password: String,
+  gender: {
+    type: String,
+    enum: ['man', 'woman']
+  },
   role: {
     type: String,
     enum: ['user', 'admin', 'photographer']

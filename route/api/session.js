@@ -39,7 +39,6 @@ module.exports = async (fastify, options) => {
   })
 
   fastify.post('/', {
-    preHandler: authCheck,
     schema: {
       description: 'create a session',
       tags: ['session'],
@@ -51,17 +50,38 @@ module.exports = async (fastify, options) => {
     },
     preHandler: [authCheck],
     handler: async (request, reply) => {
-      const payload = request.body
-      const session = new Session({
-        createdAt: new Date(),
-        man: payload.man,
-        woman: payload.woman,
-        location: payload.location,
-        userId: new mongoose.Types.ObjectId(request.user._id),
-      })
-      await session.validate()
-      await session.save()
-      reply.send(session)
+      const { user } = request;
+      const payload = request.body;
+
+      let session = new Session({
+        userId: new mongoose.Types.ObjectId(user._id)
+      });
+
+      if (user.gender == 'man') {
+        user.man = user._id;
+      } else {
+        user.woman = user._id;
+      }
+
+      await session.validate();
+      await session.save();
+      reply.send(session);
+    }
+  })
+
+  fastify.put('/:id', {
+    schema: {
+      description: 'create a session',
+      tags: ['session'],
+      security: [
+        {
+          apiKey: ['admin', 'user']
+        }
+      ]
+    },
+    preHandler: [authCheck],
+    handler: async (request, reply) => {
+      reply.send('OK');
     }
   })
 
