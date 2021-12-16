@@ -1,6 +1,7 @@
 const mongoose = require('mongoose')
 const authCheck = require('../../plug/auth')
 const { Session } = require('../../model/session')
+const { User } = require('../../model/user')
 const { Location } = require('../../model/location')
 const S = require('fluent-json-schema')
 const createError = require('fastify-error')
@@ -87,7 +88,10 @@ module.exports = async (fastify, options) => {
           userId: id
         }
       }
-      const items = await Session.find(query, {}, { limit: httpQuery.take }).exec()
+      const items = await Session.find(query)
+        .limit(httpQuery.take)
+        .sort('-createdAt')
+        .exec()
       reply.send(items)
     }
   })
@@ -115,6 +119,31 @@ module.exports = async (fastify, options) => {
       reply.send({
         status: 'OK'
       })
+    }
+  })
+
+  fastify.post('/current', {
+    preHandler: authCheck,
+    handler: async (request, reply) => {
+      const userId = new mongoose.Types.ObjectId(request.user._id);
+      let user = await User.findOne({ _id: userId });
+      console.log('request.body');
+      console.log(request.body);
+      user.currentSession = request.body;
+      console.log(user.currentSession);
+      await user.save();
+      reply.send({
+        message: 'OK'
+      })
+    }
+  })
+
+  fastify.get('/current', {
+    preHandler: authCheck,
+    handler: async (request, reply) => {
+      const userId = new mongoose.Types.ObjectId(request.user._id);
+      let user = await User.findOne({ _id: userId });
+      reply.send(user.currentSession);
     }
   })
 
