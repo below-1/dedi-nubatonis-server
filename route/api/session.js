@@ -51,20 +51,27 @@ module.exports = async (fastify, options) => {
     preHandler: [authCheck],
     handler: async (request, reply) => {
       const { user } = request;
-      const payload = request.body;
 
       let session = new Session({
         userId: new mongoose.Types.ObjectId(user._id)
       });
 
-      if (user.gender == 'man') {
-        user.man = user._id;
+      const targetUser = await User.findOne({ _id: user._id });
+
+      if (targetUser.gender == 'man') {
+        session.man = user._id;
       } else {
-        user.woman = user._id;
+        session.woman = user._id;
       }
 
-      await session.validate();
+
+      // await session.validate();
       await session.save();
+
+      targetUser.currentSession = session._id;
+
+      await targetUser.save();
+
       reply.send(session);
     }
   })
@@ -81,7 +88,29 @@ module.exports = async (fastify, options) => {
     },
     preHandler: [authCheck],
     handler: async (request, reply) => {
-      reply.send('OK');
+      const sessionId = new mongoose.Types.ObjectId(request.params.id);
+      const { user } = request;
+      const session = await Session.findOne({ _id: sessionId });
+      const weights = request.body;
+
+      if (!session.weights) {
+        session.weights = {};
+      }
+
+      if (user.role == 'user') {
+        if (user.gender == 'man') {
+          session.weights.man = weights;
+        } else {
+          session.weights.woman = weights;
+        }
+      } else if (user.role == 'photographer') {
+        // This must be photographer
+        session.weights.photographer = weights;
+      }
+
+      await session.save();
+
+      reply.send(session);
     }
   })
 
@@ -103,11 +132,11 @@ module.exports = async (fastify, options) => {
       const id = new mongoose.Types.ObjectId(user._id)
       const httpQuery = request.query
       let query = {}
-      if (user.role != 'admin') {
-        query = {
-          userId: id
-        }
-      }
+      // if (user.role != 'admin') {
+      //   query = {
+      //     userId: id
+      //   }
+      // }
       const items = await Session.find(query)
         .limit(httpQuery.take)
         .sort('-createdAt')

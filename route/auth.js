@@ -42,22 +42,25 @@ module.exports = async (fastify, options) => {
         .prop('username', S.string())
         .prop('password', S.string())
         .prop('role', S.string())
+        .prop('gender', S.string())
         .prop('nama', S.string()),
-      description: 'Signup as admin'
+      description: 'Signup'
     },
     handler: async (request, reply) => {
       const { 
         username, 
         password,
         nama,
-        role
+        role,
+        gender
       } = request.body
       const hashedPassword = await bcrypt.hash(password, 2)
       const user = new User({
         username,
         password: hashedPassword,
         nama,
-        role
+        role,
+        gender
       })
       try {
         await user.validate()
@@ -82,9 +85,10 @@ module.exports = async (fastify, options) => {
     },
     preHandler: [checkUser],
     handler: async (request, reply) => {
-      const user = request.user
-      console.log(user)
-      reply.send(user)
+      const user = await User
+        .findOne({ _id: request.user._id })
+        .populate('currentSession');
+      reply.send(user);
     }
   })
 }

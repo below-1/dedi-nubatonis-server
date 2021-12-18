@@ -1,4 +1,5 @@
 const Fastify = require('fastify')
+const prettifier = require('@mgcrea/pino-pretty-compact');
 const blipp = require('fastify-blipp')
 const cors = require('fastify-cors')
 const swagger = require('fastify-swagger')
@@ -8,7 +9,7 @@ const appRoute = require('./route/api')
 
 module.exports = (env) => {
   const fastify = Fastify({
-    logger: env.NODE_ENV == 'development'
+    logger: { prettyPrint: true, prettifier }
   })
   // console.log(fastify)
   fastify.register(blipp)

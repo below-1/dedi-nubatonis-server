@@ -15,12 +15,8 @@ const schema = mongoose.Schema({
   },
   survey: [Number],
   currentSession: {
-  	step: Number,
-  	items: [{
-		  name: String,
-		  gender: String,
-		  weights: Object
-	  }]
+  	type: String,
+    ref: 'Session'
 	}
 }, { collection: 'users' })
 
