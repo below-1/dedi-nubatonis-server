@@ -1,8 +1,10 @@
 const mongoose = require('mongoose')
+const bcrypt = require('bcrypt')
 const S = require('fluent-json-schema')
 const createError = require('fastify-error')
 const authCheck = require('../../plug/auth')
 const { Photographer } = require('../../model/photographer')
+const { User } = require('../../model/user')
 
 const PhotographerNotFound = createError('FST_PHOTOGRAPHER_NOT_FOUND', 'Photographer(id=%s) not found', 404)
 
@@ -11,10 +13,13 @@ module.exports = async (fastify, options) => {
   fastify.post('/', {
     preHandler: [authCheck],
     schema: {
-      description: 'Create location',
+      description: 'Create Photographer',
       tags: ['location'],
       body: S.object()
+        .prop('username', S.string())
+        .prop('password', S.string())
         .prop('nama', S.string())
+        .prop('gender', S.string().enum(['man', 'woman']))
         .prop('summary', S.string())
         .prop('facebook', S.string())
         .prop('instagram', S.string())
@@ -27,9 +32,11 @@ module.exports = async (fastify, options) => {
     },
     handler: async (request, reply) => {
       const payload = request.body
-      const doc = new Photographer({
-        ...payload
+      const doc = new User({
+        ...payload,
+        role: 'photographer'
       })
+      doc.password = await bcrypt.hash(payload.password, 5);
       await doc.validate()
       await doc.save()
       reply.send(doc)

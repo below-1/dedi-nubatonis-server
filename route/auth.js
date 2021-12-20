@@ -31,6 +31,7 @@ module.exports = async (fastify, options) => {
       }
       const payload = user.toObject()
       delete payload.password
+      delete payload.avatar
       const token = await jwt.sign(payload, jwtKey)
       reply.send(token)
     }

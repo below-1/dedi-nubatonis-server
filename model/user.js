@@ -13,6 +13,12 @@ const schema = mongoose.Schema({
     type: String,
     enum: ['user', 'admin', 'photographer']
   },
+
+  // Photographer data
+  summary: String,
+  facebook: String,
+  instagram: String,
+
   survey: [Number],
   avatar: String,
   currentSession: {
