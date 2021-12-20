@@ -6,7 +6,7 @@ const modelName = 'Session'
 const schema = mongoose.Schema({
   createdAt: Date,
 
-  userId: { type: mongoose.ObjectId, ref: 'User' },
+  user: { type: mongoose.ObjectId, ref: 'User' },
   man: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   woman: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   photographer: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },

@@ -14,6 +14,7 @@ const schema = mongoose.Schema({
     enum: ['user', 'admin', 'photographer']
   },
   survey: [Number],
+  avatar: String,
   currentSession: {
   	type: String,
     ref: 'Session'

@@ -53,7 +53,7 @@ module.exports = async (fastify, options) => {
       const { user } = request;
 
       let session = new Session({
-        userId: new mongoose.Types.ObjectId(user._id)
+        user: new mongoose.Types.ObjectId(user._id)
       });
 
       const targetUser = await User.findOne({ _id: user._id });
@@ -100,12 +100,15 @@ module.exports = async (fastify, options) => {
       if (user.role == 'user') {
         if (user.gender == 'man') {
           session.weights.man = weights;
+          session.man = user._id;
         } else {
           session.weights.woman = weights;
+          session.woman = user._id;
         }
       } else if (user.role == 'photographer') {
         // This must be photographer
         session.weights.photographer = weights;
+        session.photographer = user._id;
       }
 
       await session.save();
@@ -138,6 +141,10 @@ module.exports = async (fastify, options) => {
       //   }
       // }
       const items = await Session.find(query)
+        .populate('user')
+        .populate('man')
+        .populate('woman')
+        .populate('photographer')
         .limit(httpQuery.take)
         .sort('-createdAt')
         .exec()
@@ -168,6 +175,31 @@ module.exports = async (fastify, options) => {
       reply.send({
         status: 'OK'
       })
+    }
+  })
+
+  fastify.get('/:id', {
+    schema: {
+      description: 'list session',
+      tags: ['session'],
+      security: [
+        {
+          apiKey: ['admin', 'user', 'photographer']
+        }
+      ],
+      params: S.object()
+        .prop('id', S.string()),
+    },
+    handler: async (request, reply) => {
+      const id = new mongoose.Types.ObjectId(request.params.id)
+      const result = await Session.findOne({
+        _id: id
+      })
+        .populate('user')
+        .populate('man')
+        .populate('woman')
+        .populate('photographer')
+      reply.send(result)
     }
   })
 

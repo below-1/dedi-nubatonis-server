@@ -91,4 +91,23 @@ module.exports = async (fastify, options) => {
       reply.send(user);
     }
   })
+
+  fastify.put('/me', {
+    schema: {
+      description: 'Update information about current user',
+      tags: ['auth'],
+      security: [
+        { apiKey: ['admin', 'user', 'photographer'] }
+      ],
+    },
+    preHandler: [checkUser],
+    handler: async (request, reply) => {
+      const payload = request.body;
+      const user = await User.findOne({ _id: request.user._id });
+      user.nama = payload.nama;
+      user.avatar = payload.avatar;
+      await user.save();
+      reply.send(user);
+    }
+  })
 }
