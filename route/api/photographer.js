@@ -49,7 +49,7 @@ module.exports = async (fastify, options) => {
       tags: ['photographer']
     },
     handler: async (request, reply) => {
-      const result = await Photographer.find().exec()
+      const result = await User.find({ role: 'photographer' }).exec()
       reply.send(result)
     }
   })
@@ -75,7 +75,7 @@ module.exports = async (fastify, options) => {
     },
     handler: async (request, reply) => {
       const id = new mongoose.Types.ObjectId(request.params.id)
-      const doc = await Photographer.findById(id)
+      const doc = await User.findById(id)
       if (!doc) {
         throw new PhotographerNotFound(request.params.id)
       }
@@ -100,7 +100,7 @@ module.exports = async (fastify, options) => {
     },
     handler: async (request, reply) => {
       const id = new mongoose.Types.ObjectId(request.params.id)
-      const result = await Photographer.deleteOne({
+      const result = await User.deleteOne({
         _id: id
       })
       if (result.deletedCount != 1) {
@@ -121,8 +121,36 @@ module.exports = async (fastify, options) => {
     },
     handler: async (request, reply) => {
       const id = new mongoose.Types.ObjectId(request.params.id)
-      const result = await Photographer.findById(id)
+      const result = await User.findById(id)
       reply.send(result)
+    }
+  })
+
+  fastify.put('/:id/password', {
+    preHandler: [authCheck],
+    schema: {
+      description: 'Update Password Photographer',
+      tags: ['photographer'],
+      params: S.object()
+        .prop('id', S.string()),
+      body: S.object()
+        .prop('password', S.string()),
+      security: [
+        {
+          apiKey: ['admin']
+        }
+      ]
+    },
+    handler: async (request, reply) => {
+      const id = new mongoose.Types.ObjectId(request.params.id)
+      const doc = await User.findById(id)
+      if (!doc) {
+        throw new PhotographerNotFound(request.params.id)
+      }
+      const payload = request.body
+      doc.password = await bcrypt.hash(payload.password, 4)
+      await doc.save()
+      reply.send(doc)
     }
   })
 
