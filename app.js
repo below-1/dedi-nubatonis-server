@@ -9,7 +9,7 @@ const appRoute = require('./route/api')
 
 module.exports = (env) => {
   const fastify = Fastify({
-    logger: { prettyPrint: true, prettifier }
+    // logger: { prettyPrint: true, prettifier }
   })
   // console.log(fastify)
   fastify.register(blipp)
