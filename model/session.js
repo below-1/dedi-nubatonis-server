@@ -5,8 +5,7 @@ const modelName = 'Session'
 const SessionStatus = {
     OPEN: 'OPEN',
     VALIDATING: 'VALIDATING',
-    SECOND: 'SECOND',
-    THIRD: 'THIRD',
+    READY: 'READY',
     DONE: 'DONE'
 }
 

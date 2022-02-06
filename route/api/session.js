@@ -7,13 +7,10 @@ const S = require('fluent-json-schema')
 const createError = require('fastify-error')
 const randomstring = require('randomstring');
 
-const SessionNotFound = createError('SESSION_NOT_FOUND', 'Session(id=%s) not found', 404);
+const SessionNotFound = createError('SESSION_NOT_FOUND', 'Sesi tidak ditemukan', 404);
+const TokenNotFound = createError('TOKEN_NOT_FOUND', 'Token tidak ditemukan', 404);
 const PhotographerExists = createError('PHOTOGRAPHER_EXISTS', 'Photographer exists for Session(id=%s)', 400);
 const SessionNotComplete = createError('SESSION_NOT_COMPLETE', 'Session(id=%s) not complete');
-
-function sessionIsComplete() {
-  
-}
 
 module.exports = async(fastify, options) => {
 
@@ -49,43 +46,50 @@ module.exports = async(fastify, options) => {
       tags: ['session'],
       security: [{
         apiKey: ['admin', 'user']
-      }]
+      }],
+      body: S.object()
+        .prop('date', S.string().format('date'))
     },
     preHandler: [authCheck],
     handler: async(request, reply) => {
       const { user } = request;
-            // Generate token here
-            const token = randomstring.generate(8);
-            // Status is OPEN at creation
-            const status = SessionStatus.OPEN;
-            let session = new Session({
-              user: new mongoose.Types.ObjectId(user._id),
-              token,
-              status
-            });
+      const { body } = request;
+      // Generate token here
+      const token = randomstring.generate(8);
+      // Status is OPEN at creation
+      const status = SessionStatus.OPEN;
 
-            const targetUser = await User.findOne({ _id: user._id });
+      const date = new Date(body.date);
 
-            if (targetUser.gender == 'man') {
-              session.man = user._id;
-            } else {
-              session.woman = user._id;
-            }
+      let session = new Session({
+        user: new mongoose.Types.ObjectId(user._id),
+        token,
+        status,
+        date
+      });
 
-            // await session.validate();
-            await session.save();
+      const targetUser = await User.findOne({ _id: user._id });
 
-            targetUser.currentSession = session._id;
+      if (targetUser.gender == 'man') {
+        session.man = user._id;
+      } else {
+        session.woman = user._id;
+      }
 
-            await targetUser.save();
+      // await session.validate();
+      await session.save();
 
-            reply.send(session);
-          }
-        })
+      targetUser.currentSession = session._id;
 
-  fastify.put('/:id', {
+      await targetUser.save();
+
+      reply.send(session);
+    }
+  })
+
+  fastify.put('/:id/weights', {
     schema: {
-      description: 'create a session',
+      description: 'update session weights',
       tags: ['session'],
       security: [{
         apiKey: ['admin', 'user']
@@ -111,23 +115,20 @@ module.exports = async(fastify, options) => {
           session.woman = user._id;
         }
       } else if (user.role == 'photographer') {
-                // This must be photographer
-                session.weights.photographer = weights;
-                session.photographer = user._id;
-              }
+        // This must be photographer
+        session.weights.photographer = weights;
+        session.photographer = user._id;
+      }
 
-              await session.save();
-
-              const sessWeights = session.weights;
-              const allDone = (sessWeights.man && sessWeights.woman && sessWeights.photographer);
-              const response = {
-                complete: allDone,
-                weights: sessWeights
-              };
-
-              reply.send(response);
-            }
-          })
+      const sessWeights = session.weights;
+      const allWeightsDone = (sessWeights.man && sessWeights.woman && sessWeights.photographer);
+      if (allWeightsDone) {
+        session.status = SessionStatus.READY;
+      }
+      await session.save();
+      reply.send(session);
+    }
+  })
 
   fastify.put('/:id/result', {
     schema: {
@@ -162,7 +163,7 @@ module.exports = async(fastify, options) => {
       const { location, borda } = request.body;
       session.location = location;
       session.borda = borda;
-      session.complete = true;
+      session.status = SessionStatus.DONE;
 
       const owner = await User.findById(session.user);
       owner.currentSession = null;
@@ -216,19 +217,25 @@ module.exports = async(fastify, options) => {
       const id = new mongoose.Types.ObjectId(user._id)
       const httpQuery = request.query
       let query = {}
-      if (user.role != 'admin') {
+
+      if (user.role == 'user') {
         query = {
-          userId: id
+          user: id
+        }
+      } else if (user.role == 'photographer') {
+        query = {
+          photographer: id
         }
       }
+
       const items = await Session.find(query)
-      .populate('user')
-      .populate('man')
-      .populate('woman')
-      .populate('photographer')
-      .limit(httpQuery.take)
-      .sort('-createdAt')
-      .exec()
+        .populate('user')
+        .populate('man')
+        .populate('woman')
+        .populate('photographer')
+        .limit(httpQuery.take)
+        .sort('-createdAt')
+        .exec()
       reply.send(items)
     }
   })
@@ -261,27 +268,31 @@ module.exports = async(fastify, options) => {
       description: 'get session by token',
       tags: ['session'],
       params: S.object()
-      .prop('token', S.string()),
+        .prop('token', S.string()),
     },
     handler: async(request, reply) => {
       const { token } = request.params
       const result = await Session.findOne({
         token
       })
-      .populate('user')
-      .populate('man')
-      .populate('woman')
-      .populate('photographer')
-      reply.send(result)
+        .populate('user')
+        .populate('man')
+        .populate('woman')
+        .populate('photographer')
+      if (!result) {
+        throw new TokenNotFound()
+      } else {
+        reply.send(result)
+      }
     }
   })
 
   fastify.put('/by-token/:token', {
     schema: {
-      description: 'get session by token',
+      description: 'update session by token. Create ghost user',
       tags: ['session'],
       params: S.object()
-      .prop('token', S.string())
+        .prop('token', S.string())
     },
     handler: async(request, reply) => {
       const { token } = request.params
@@ -290,23 +301,50 @@ module.exports = async(fastify, options) => {
       const session = await Session
         .findOne({ token })
         .populate('user')
+        .populate();
+
       if (!session) {
         throw new SessionNotFound(token);
       }
+
       const creatorGender = session.user.gender;
       const spouseGender = creatorGender == 'man' ? 'woman' : 'man';
 
-      // Create new user
-      const spouse = new User({
-        nama,
-        gender: spouseGender,
-        avatar
-      });
-      await spouse.save()
-      console.log(`spouseGender = ${spouseGender}`)
+      console.log('session')
+      console.log(session)
 
-      session[spouseGender] = spouse._id;
+      let spouse = null;
+      // Check if the spouse is already exists
+      if (!session[spouseGender]) {
+        // Create new user
+        spouse = new User({
+          nama,
+          gender: spouseGender,
+          avatar,
+          role: 'spouse'
+        });
+        await spouse.save();
+        session[spouseGender] = spouse._id;
+      } else {
+        // Update the user if necessary
+        const spouseId = session[spouseGender]._id
+        spouse = await User.findOne({ _id: spouseId })
+        spouse.nama = nama
+        spouse.avatar = avatar
+        await spouse.save()
+        session[spouseGender] = spouse
+      }
+
+      await session.populate('man');
+      await session.populate('woman');
+
       session.weights[spouseGender] = weights;
+
+      const sessWeights = session.weights;
+      const allWeightsDone = (sessWeights.man && sessWeights.woman && sessWeights.photographer);
+      if (allWeightsDone) {
+        session.status = SessionStatus.READY;
+      }
 
       await session.save();
       reply.send(session);
