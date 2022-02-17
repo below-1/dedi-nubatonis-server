@@ -1,8 +1,10 @@
 const mongoose = require('mongoose')
 const bcrypt = require('bcrypt')
+const randomstring = require('randomstring')
 const S = require('fluent-json-schema')
 const createError = require('fastify-error')
 const authCheck = require('../../plug/auth')
+const { uploadBase64 } = require('../../imageUpload');
 const { Photographer } = require('../../model/photographer')
 const { User } = require('../../model/user')
 
@@ -31,12 +33,17 @@ module.exports = async (fastify, options) => {
       ]
     },
     handler: async (request, reply) => {
-      const payload = request.body
+      let { avatar, ...payload } = request.body
+      const imageUrlData = await uploadBase64(avatar)
+
       const doc = new User({
         ...payload,
+        ...imageUrlData,
         role: 'photographer'
       })
-      doc.password = await bcrypt.hash(payload.password, 5);
+
+      doc.password = await bcrypt.hash(payload.password, 5)
+
       await doc.validate()
       await doc.save()
       reply.send(doc)
@@ -79,8 +86,26 @@ module.exports = async (fastify, options) => {
       if (!doc) {
         throw new PhotographerNotFound(request.params.id)
       }
-      const payload = request.body
-      doc.set(payload)
+
+      let { avatar, ...payload } = request.body
+      const extension = avatar.substring("data:image/".length, avatar.indexOf(";base64"))
+      const avatarName = randomstring.generate(8) + '.' + extension;
+
+      try {
+        const result = await imagekit.upload({
+          file: avatar,
+          fileName: avatarName
+        })
+        console.log('result')
+        console.log(result)
+        payload.avatarUrl = result.url
+        payload.avatarThumbnailUrl = result.thumbnailUrl
+      } catch (err) {
+        console.log(err)
+        throw err
+      }
+
+      doc.overwrite(payload)
       await doc.save()
       reply.send(doc)
     }

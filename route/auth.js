@@ -4,6 +4,7 @@ const { User } = require('../model/user')
 const S = require('fluent-json-schema')
 const createError = require('fastify-error')
 const checkUser = require('../plug/auth')
+const { uploadBase64 } = require('../imageUpload')
 
 const UserNotFound = createError('FST_USER_NOT_FOUND', "User with username=%s can't be found", 500)
 const PasswordNotMatch = createError('FST_PASSWORD_NOT_MATCH', "Password not match", 500)
@@ -103,12 +104,19 @@ module.exports = async (fastify, options) => {
     },
     preHandler: [checkUser],
     handler: async (request, reply) => {
-      const payload = request.body;
-      const user = await User.findOne({ _id: request.user._id });
-      user.nama = payload.nama;
-      user.avatar = payload.avatar;
-      await user.save();
-      reply.send(user);
+      let { avatar, ...payload } = request.body
+      const user = await User.findOne({ _id: request.user._id })
+
+      if (avatar) {
+        const imageUrlData = await uploadBase64(avatar)
+        user.avatarUrl = imageUrlData.avatarUrl
+        user.avatarThumbnailUrl = imageUrlData.avatarThumbnailUrl
+      }
+
+      user.nama = payload.nama
+      await user.save()
+
+      reply.send(user)
     }
   })
 }

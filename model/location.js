@@ -6,6 +6,8 @@ const schema = mongoose.Schema({
   latitude: String,
   longitude: String,
   avatar: String,
+  avatarUrl: String,
+  avatarThumbnailUrl: String,
   distance: Number,
   transportation: {
     type: String,

@@ -6,7 +6,9 @@ const schema = mongoose.Schema({
   summary: String,
   facebook: String,
   instagram: String,
-  avatar: String
+  avatar: String,
+  avatarUrl: String,
+  avatarThumbnailUrl: String,
 }, { collection: 'photographers' })
 
 const Photographer = mongoose.model(modelName, schema)

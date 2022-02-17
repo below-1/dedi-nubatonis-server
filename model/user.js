@@ -21,6 +21,8 @@ const schema = mongoose.Schema({
 
     survey: [Number],
     avatar: String,
+    avatarUrl: String,
+    avatarThumbnailUrl: String,
     currentSession: {
         type: String,
         ref: 'Session'

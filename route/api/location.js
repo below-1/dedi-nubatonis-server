@@ -3,6 +3,7 @@ const authCheck = require('../../plug/auth')
 const S = require('fluent-json-schema')
 const mongoose = require('mongoose')
 const createError = require('fastify-error')
+const { uploadBase64 } = require('../../imageUpload');
 
 const LocationNotFound = createError('FST_LOCATION_NOT_FOUND', 'Location(id=%s) not found', 404)
 
@@ -28,7 +29,11 @@ module.exports = async (fastify, options) => {
       ]
     },
     handler: async (request, reply) => {
-      const payload = request.body
+      let { avatar, ...payload } = request.body
+      if (avatar) {
+        const imageUrlData = await uploadBase64(avatar)
+        payload = { ...payload, ...imageUrlData }
+      }
       const doc = new Location({
         ...payload
       })
@@ -77,8 +82,13 @@ module.exports = async (fastify, options) => {
       if (!doc) {
         throw new LocationNotFound(request.params.id)
       }
-      const payload = request.body
-      doc.set(payload)
+      let { avatar, ...payload } = request.body
+      if (avatar) {
+        const imageUrlData = await uploadBase64(avatar)
+        payload = {...payload, ...imageUrlData }
+      }
+
+      doc.overwrite(payload)
       await doc.save()
       reply.send(doc)
     }
