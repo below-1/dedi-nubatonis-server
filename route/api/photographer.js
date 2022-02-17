@@ -88,21 +88,13 @@ module.exports = async (fastify, options) => {
       }
 
       let { avatar, ...payload } = request.body
-      const extension = avatar.substring("data:image/".length, avatar.indexOf(";base64"))
-      const avatarName = randomstring.generate(8) + '.' + extension;
 
-      try {
-        const result = await imagekit.upload({
-          file: avatar,
-          fileName: avatarName
-        })
-        console.log('result')
-        console.log(result)
-        payload.avatarUrl = result.url
-        payload.avatarThumbnailUrl = result.thumbnailUrl
-      } catch (err) {
-        console.log(err)
-        throw err
+      if (avatar) {
+        const imgDataUrl = await uploadBase64(avatar)
+        payload = {
+          ...payload,
+          ...imgDataUrl
+        }
       }
 
       doc.overwrite(payload)
