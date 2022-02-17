@@ -22,9 +22,11 @@
     "fastify-plugin": "^3.0.0",
     "fastify-swagger": "^4.12.6",
     "fluent-json-schema": "^3.0.1",
+    "imagekit": "^3.2.5",
     "jsonwebtoken": "^8.5.1",
     "mongoose": "^6.0.12",
-    "pino-pretty": "^7.3.0"
+    "pino-pretty": "^7.3.0",
+    "randomstring": "^1.2.2"
   },
   "devDependencies": {
     "dotenv": "^10.0.0"

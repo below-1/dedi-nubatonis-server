@@ -8,7 +8,7 @@ const createError = require('fastify-error')
 
 module.exports = async (fastify, options) => {
 
-	fastify.post('/', {
+	fastify.post('/:user_id', {
 		schema: {
       description: 'create new survey result',
       tags: ['survey'],
@@ -22,23 +22,19 @@ module.exports = async (fastify, options) => {
     },
     preHandler: [authCheck],
 		handler: async (request, reply) => {
-			const _id = request.user._id;
+			const _id = new mongoose.Types.ObjectId(request.params.user_id)
 			const user = await User.findOne({ _id });
 			const { answers } = request.body;
-			console.log('request.body');
-			console.log(request.body);
 			user.survey = answers;
 			await user.save();
-			console.log('user');
-			console.log(user);
 			reply.send(user);
 		}
 	})
 
-	fastify.get('/', {
+	fastify.get('/:user_id', {
 		preHandler: [authCheck],
 		handler: async (request, reply) => {
-			const _id = request.user._id;
+			const _id = new mongoose.Types.ObjectId(request.params.user_id)
 			const user = await User.findOne({ _id });
 			reply.send({
 				survey: user.survey
